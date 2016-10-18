@@ -16,15 +16,16 @@ Take an example of a from date and a to date when filtering data from a form. In
 * As internal class data
 Another way to use a Struct is within another Class. In the example below, after a Person object is initialized, we can work with the Address struct that encapsulates all of the address fields into a single Struct object.
 
-     class Person
+```
+    class Person
 
       Address = Struct.new(:street_1, :street_2, :city, :province, :country, :postal_code)
 
       attr_accessor :name, :address
 
       def initialize(name, opts)
-       @name = name
-       @address = Address.new(opts[:street_1], opts[:street_2], opts[:city], opts[:province], opts[:country],    opts[:postal_code])
+        @name = name
+        @address = Address.new(opts[:street_1], opts[:street_2], opts[:city], opts[:province], opts[:country],  opts[:postal_code])
       end
 
     end
@@ -39,3 +40,13 @@ Another way to use a Struct is within another Class. In the example below, after
 
     puts leigh.address.inspect
       # <struct Person::Address street_1="123 Road", street_2=nil, city="Toronto", province="Ontario", country="Canada",  postal_code="M5E 0A3">
+```
+
+* As a testing stub
+Structs are also an easy way to stub out objects when testing. As long as they respond the same way as the object you are stubbing out, you're free to use them!
+
+**Struct vs. OpenStruct**
+
+OpenStruct acts very similarly to Struct, except that it doesn't have a defined list of attributes. It can accept a hash of attributes when instantiated, and you can add new attributes to the object dynamically. It isn't as fast as Struct, but it is more flexible.
+
+https://www.leighhalliday.com/ruby-struct
