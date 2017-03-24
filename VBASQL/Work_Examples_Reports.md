@@ -1,18 +1,3 @@
-M2 - Timed
-
-This module manages production of the reports on the Timed sheet of the workbook.
-
-
-Written by Tim Robertson - 16/03/2017
-
-Amendments:
-
-Modules
-
-FRGetTimedData()    - Download Timed opportunity report data and place into Excel table
-TRHowLong()         - Report showing average time between transactions in hours per user
- 
-Option Explicit
 
 ```
 Sub TRGetTimedData()
@@ -379,6 +364,90 @@ Sub TRHowLong()
     
     Loop
     
+    LinkToServer.Close
+    Set LinkToServer = Nothing
+    
+End Sub
+```
+
+```
+Sub OCRGetQuoteReport()
+' Download Quote report data and place into Excel table
+    
+    DeleteTableRows ("OCRQuote_Table")
+    
+    Dim LinkToServer As New ADODB.Connection
+    Dim LoginAccess As String
+    Dim SQLSyntax As String
+    Dim Basket As New ADODB.Recordset ' recordset is fetched in.
+    Dim StartDate As Date
+    Dim ChasedDate As String
+    
+    StartDate = DateAdd("d", 5, Now())
+    
+    [QCRError] = ""
+    
+    LoginAccess = [HDConnectionString]
+    
+    SQLSyntax = "SELECT OP.OpportunityName, QT.QuoteReference, QT.QuoteDescription, QT.ProductType, QT.QuoteStatus, " & _
+                "TA.LastUpdated, BR.BrokerName, QT.NumberOfLives, QT.TotalPremium, OP.PoolingCode, " & _
+                "OP.HasOtherActiveQuotes, CH.ChasedDate, CH.ChaseNextDate, " & _
+                "US.Username, CH.ChaseComment, QT.FollowUpCode " & _
+                "FROM dbo.Quote AS QT " & _
+                "INNER JOIN dbo.Opportunity AS OP " & _
+                "ON QT.OpportunityID = OP.OpportunityID " & _
+                "LEFT JOIN dbo.Chaser AS CH " & _
+                "ON QT.OpportunityID = CH.OpportunityID " & _
+                "AND ( QT.QuoteNumber = CH.QuoteLevel or CH.QuoteLevel = 0 ) " & _
+                "LEFT JOIN dbo.Users AS US " & _
+                "ON OP.AllocatedChaserID = US.UserID " & _
+                "LEFT JOIN dbo.TransactionAudit AS TA " & _
+                "ON QT.OpportunityID = TA.OpportunityID " & _
+                "AND QT.QuoteNumber = TA.QuoteLevel " & _
+                "LEFT JOIN dbo.Broker AS BR " & _
+                "ON OP.BrokerID = BR.BrokerID " & _
+                "WHERE QT.QuoteStatus = 'Issued' " & _
+                "AND TA.TransactionDesc = 'Quote Sent' " & _
+                "AND ( ChaseNextDate <= " & VBAtoSQLUpdateFormatDate(StartDate) & "" & _
+                "OR ChaseNextDate is NULL )" & _
+                "AND (CH.ChaserID = (SELECT MAX(ChaserID) FROM dbo.Chaser " & _
+                "WHERE OpportunityID = CH.OpportunityID " & _
+                "AND (QT.QuoteNumber = QuoteLevel OR QuoteLevel = '0' ))) " & _
+                "ORDER BY CH.ChaseNextDate"
+    
+    LinkToServer.ConnectionTimeout = 30
+    LinkToServer.Open LoginAccess
+    Basket.Open SQLSyntax, LinkToServer
+
+    If Basket.EOF Then
+        [QCRError] = "No records"
+    Else
+        While Not Basket.EOF
+        
+            ' change null ChasedDate to 'Not Yet Chased'
+            ChasedDate = IIf(Basket.Fields("ChasedDate").Value = 0, "Not Yet Chased", SQLtoXLSFormatDateTime(Basket.Fields("ChasedDate").Value))
+                        
+            AddTableRow "OCRQuote_Table", Array(Basket.Fields("OpportunityName").Value, _
+                                                     Basket.Fields("QuoteReference").Value, _
+                                                     Basket.Fields("QuoteDescription").Value, _
+                                                     Basket.Fields("ProductType").Value, _
+                                                     Basket.Fields("QuoteStatus").Value, _
+                                                     Basket.Fields("LastUpdated").Value, _
+                                                     Basket.Fields("BrokerName").Value, _
+                                                     Basket.Fields("NumberOfLives").Value, _
+                                                     Basket.Fields("TotalPremium").Value, _
+                                                     Basket.Fields("PoolingCode").Value, _
+                                                     Basket.Fields("HasOtherActiveQuotes").Value, _
+                                                     ChasedDate, _
+                                                     Basket.Fields("ChaseNextDate").Value, _
+                                                     Basket.Fields("Username").Value, _
+                                                     Basket.Fields("ChaseComment").Value, _
+                                                     Basket.Fields("FollowUpCode").Value)
+            Basket.MoveNext
+        Wend
+    End If
+        
+    Basket.Close
     LinkToServer.Close
     Set LinkToServer = Nothing
     
