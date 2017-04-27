@@ -1,3 +1,5 @@
+This script gets all events from a named calendar for a named date range and populates the active Google Sheets document. To use, open a new Sheets document. From the menu choose *Tools > Script Editor*, copy this code in and then from the editor menu choose run the *import_calendars* function.
+
     function import_calendar( start_date, end_date, spreadsheet, sheet_name) {
       var sheet = spreadsheet.getSheetByName(sheet_name);
 
