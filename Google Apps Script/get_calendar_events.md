@@ -31,3 +31,37 @@ This script gets all events from a named calendar for a named date range and pop
 
     
     }
+
+Copy to new calendar....
+
+    function import_calendar( start_date, end_date, spreadsheet, sheet_name) {
+      var sheet = spreadsheet.getSheetByName(sheet_name);
+
+      var cal = CalendarApp.openByName("Sanderson's Events");
+      var newcal = CalendarApp.openByName("Sanderson Events");
+      sheet.clear();
+      events = cal.getEvents( start_date, end_date );
+
+      irow = 2;
+      for( i in events ) {
+        evt = events[i];
+        var title = evt.getTitle();
+        var start_date = evt.getStartTime();
+        var end_date = evt.getEndTime();
+    //    var formatted_date = (date.getMonth()+1) + '/' + date.getDate() + '/' + date.getYear();
+    //    sheet.getRange("A"+irow).setValue( formatted_date );
+    //    sheet.getRange("B"+irow).setValue( evt.getTitle() );
+        var event = newcal.createEvent(title, start_date, end_date );
+        irow ++;
+      }
+
+    }
+
+    function import_calendars() {
+      var start_date = new Date("May 13, 2016");
+      var end_date   = new Date("Jan 1, 2018");
+
+      var ss = SpreadsheetApp.getActiveSpreadsheet();
+      import_calendar( start_date, end_date, ss, "sandersons" );
+
+    }
