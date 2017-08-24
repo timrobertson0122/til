@@ -7,6 +7,22 @@
           }
         end
         
+        def back_to_lets_listings_search_path
+            cookie = cookies.signed['lets_search_params']
+            return lets_listings_path if cookie.blank?
+
+            cookie = JSON.parse(cookie, :symbolize_names => true)
+            return lets_listings_path if cookie.blank?
+
+            cookie_params = cookie[:params]
+            path_method   = 'lets_listings_path'
+
+            path_method = "landing_page_#{path_method}" if cookie_params.key?(:landing_page_id)
+            path_method = "map_#{path_method}"          if cookie[:map] == true
+
+            send(path_method, cookie_params)
+          end
+        
 `setup_index_params` is a `before_action` on our LetsListingsController. We use a signed cookie, setting it's value to the serialized
 search criteria (for our JSON API) so that we can return the user to their search results.         
         
